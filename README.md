@@ -137,3 +137,5 @@ The application places all key tools at the **very top ribbon** under the **HTTP
 
 **Q: How does the system handle supernumerary and NRI/OCI/FN seats?**  
 > *"Under AICTE rules, supernumerary (TFW, EWS, PMSSS) and foreign/NRI seats are over and above the sanctioned intake. Our database schema tracks these quotas independently, preventing colleges from exceeding their authorized sub-allocations."*
+# APAAR-VAULT
+A web-based APAAR ID management and verification platform for AICTE-approved institutions, designed to streamline student data management, detect duplicate records, validate student information, and monitor enrolment against approved intake using a centralized dashboard.
