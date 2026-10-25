@@ -1,0 +1,6 @@
+apaar_id,roll_number,first_name,last_name,gender,dob,email,phone,institution_id,program_id,quota_category
+904128475107,2026-COEP-CS-06,Sanya,Kulkarni,Female,2005-08-14,sanya.k@coep.ac.in,+91-9811223399,1,1,Regular
+904128475108,2026-COEP-CS-07,Tanmay,Verma,Male,2005-01-22,tanmay.v@coep.ac.in,+91-9822334455,1,1,Supernumerary-TFW
+904128475109,2026-COEP-CS-08,Aditi,Sharma,Female,2004-10-10,aditi.s@coep.ac.in,+91-9833445566,1,1,NRI
+882190341255,2026-DTU-MECH-99,Vikram,Aditya,Male,2005-05-10,vikram.a@dtu.ac.in,+91-9123456780,2,3,Regular
+111111111111,2026-DTU-IT-999,Invalid,Format,Male,2005-01-01,fake@dtu.ac.in,+91-9000000000,2,3,Regular

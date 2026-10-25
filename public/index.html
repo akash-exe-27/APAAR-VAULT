@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AICTE APAAR | Confidential Student Data Management & Verification</title>
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- ================= 1. LOGIN & ROLE SWITCH MODAL ================= -->
+    <div id="loginOverlay" class="modal-overlay">
+        <div class="login-card">
+            <!-- Back / Previous button inside modal as requested -->
+            <button class="btn-subview-back" id="btnModalBack" onclick="closeLoginModal()" style="display:none;">
+                <i class="fa-solid fa-arrow-left"></i> Previous / Back
+            </button>
+
+            <div style="text-align:center; margin-bottom: 20px;">
+                <div class="brand-icon-box" style="margin: 0 auto 10px; width:50px; height:50px; font-size:1.6rem;">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <h2 style="font-size: 1.35rem; font-weight:800; color:var(--text-heading);" id="t-login-title">AICTE - APAAR Platform</h2>
+                <p style="font-size: 0.82rem; color:var(--text-muted);" id="t-login-sub">Confidential Academic Repository & Verification Portal</p>
+            </div>
+
+            <div class="role-choice-grid">
+                <!-- Choice 1: AICTE Administrator -->
+                <div class="role-box active" id="roleBoxAdmin" onclick="selectLoginRole('admin')">
+                    <div class="role-icon"><i class="fa-solid fa-building-columns"></i></div>
+                    <div class="role-title" id="t-role-admin">AICTE Administrator</div>
+                    <div class="role-desc" id="t-role-admin-desc">National intake oversight, add colleges & resolve anomalies</div>
+                </div>
+
+                <!-- Choice 2: Institution Portal -->
+                <div class="role-box" id="roleBoxInst" onclick="selectLoginRole('institution')">
+                    <div class="role-icon"><i class="fa-solid fa-school"></i></div>
+                    <div class="role-title" id="t-role-inst">Approved Institution</div>
+                    <div class="role-desc" id="t-role-inst-desc">Upload student admissions & manage college anomaly desk</div>
+                </div>
+            </div>
+
+            <!-- Institution Picker (Only if Institution role is chosen) -->
+            <div id="institutionSelectWrap" class="form-group" style="display: none;">
+                <label class="form-label" id="t-choose-inst"><i class="fa-solid fa-building"></i> Select Your Institution:</label>
+                <select id="loginInstitutionSelect" class="form-select">
+                    <!-- Populated dynamically -->
+                </select>
+                <small style="color:var(--text-muted); font-size:0.75rem;">Confidential access: You will only see records for your selected institution.</small>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="authenticateAndEnter()">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> <span id="t-btn-enter">Enter Portal</span>
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ================= 2. MAIN HEADER ================= -->
+    <header class="main-header">
+        <div class="header-top-row">
+            <div class="container flex-between">
+                <div class="brand-group">
+                    <div class="brand-icon-box">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h1 class="brand-title" id="t-portal-title">AICTE - APAAR PORTAL</h1>
+                        <p class="brand-subtitle" id="t-portal-subtitle">One Nation, One Student ID | National Academic Data Management Platform</p>
+                    </div>
+                </div>
+
+                <div class="header-controls">
+                    <!-- Multi-Language Selector -->
+                    <div class="control-pill">
+                        <i class="fa-solid fa-language" style="color:var(--teal-main);"></i>
+                        <select id="languageSelect" class="control-select" onchange="changeLanguage(this.value)">
+                            <option value="en">English</option>
+                            <option value="hi">हिन्दी (Hindi)</option>
+                            <option value="ta">தமிழ் (Tamil)</option>
+                            <option value="te">తెలుగు (Telugu)</option>
+                            <option value="mr">मराठी (Marathi)</option>
+                            <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                            <option value="bn">বাংলা (Bengali)</option>
+                        </select>
+                    </div>
+
+                    <!-- Academic Year Selector -->
+                    <div class="control-pill">
+                        <label id="t-acad-year-label">YEAR:</label>
+                        <select id="academicYearSelect" class="control-select" onchange="changeAcademicYear(this.value)">
+                            <option value="2026-2027" selected>2026-2027</option>
+                            <option value="2025-2026">2025-2026</option>
+                            <option value="2024-2025">2024-2025</option>
+                        </select>
+                    </div>
+
+                    <!-- Role Badge & Switch Button -->
+                    <div class="role-badge-box" id="currentRoleBadge">
+                        <i class="fa-solid fa-user-shield"></i> <span id="currentRoleLabel">AICTE Admin</span>
+                    </div>
+
+                    <button class="btn btn-secondary btn-sm" onclick="showLoginModal(true)" title="Switch Account">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> <span id="t-btn-switch">Switch Account</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. CENTERED NAVIGATION (Icons & Tabs Centered as Requested, No Previous Icon Here) -->
+        <div class="header-bottom-row">
+            <div class="container">
+                <nav class="nav-buttons-centered" id="navButtonsContainer">
+                    <!-- Injected dynamically based on role -->
+                </nav>
+            </div>
+        </div>
+    </header>
+
+
+    <!-- ================= 4. MAIN PAGE CONTENT ================= -->
+    <main class="container page-content">
+
+        <!-- TAB 1: DASHBOARD (ADMIN OR INSTITUTION SCOPED) -->
+        <section id="tab-dashboard" class="tab-pane active">
+            <div class="flex-between" style="margin-bottom: 20px;">
+                <div>
+                    <h2 class="card-title" id="dashboardHeading">
+                        <i class="fa-solid fa-chart-pie" style="color:var(--teal-main);"></i>
+                        <span id="t-dash-title">Academic Enrolment Dashboard</span>
+                    </h2>
+                    <p class="card-subtitle" id="dashboardSubHeading">Confidential metrics for Academic Year <span class="active-year-label">2026-2027</span></p>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="loadAllData()">
+                    <i class="fa-solid fa-rotate"></i> <span id="t-btn-refresh">Refresh Data</span>
+                </button>
+            </div>
+
+            <!-- KPI Grid -->
+            <div class="kpi-grid">
+                <div class="kpi-card" id="kpiInstitutionsCard">
+                    <div class="kpi-icon teal"><i class="fa-solid fa-building-columns"></i></div>
+                    <div>
+                        <span class="kpi-label" id="t-kpi-inst">Approved Institutions</span>
+                        <h3 class="kpi-value" id="kpiInstitutions">0</h3>
+                        <span class="kpi-sub" id="kpiInstSub">AICTE Registered</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon green"><i class="fa-solid fa-user-check"></i></div>
+                    <div>
+                        <span class="kpi-label" id="t-kpi-enrolled">APAAR Enrolments</span>
+                        <h3 class="kpi-value" id="kpiStudents">0</h3>
+                        <span class="kpi-sub" style="color:var(--color-green); font-weight:600;"><i class="fa-solid fa-fingerprint"></i> Hashed & Verified</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon amber"><i class="fa-solid fa-chair"></i></div>
+                    <div>
+                        <span class="kpi-label" id="t-kpi-intake">Approved Intake</span>
+                        <h3 class="kpi-value" id="kpiTotalIntake">0</h3>
+                        <span class="kpi-sub" id="kpiUtilization">0% Seat Utilization</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div>
+                        <span class="kpi-label" id="t-kpi-anomalies">Active Anomalies</span>
+                        <h3 class="kpi-value" id="kpiAnomalies" style="color:var(--color-red);">0</h3>
+                        <span class="kpi-sub" id="t-kpi-anom-sub">Pending Review</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="two-col-grid">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fa-solid fa-chart-column" style="color:var(--teal-main);"></i>
+                        <span id="t-chart-intake">Sanctioned Intake vs Actual Enrolment</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="intakeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fa-solid fa-chart-pie" style="color:var(--color-green);"></i>
+                        <span id="t-chart-quota">Seat Quota & Category Breakdown</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="quotaChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Institutions Overview with Operational Years (Admin Only) -->
+            <div class="card" id="adminInstitutionsCard" style="margin-top: 20px;">
+                <div class="card-title">
+                    <i class="fa-solid fa-landmark" style="color:var(--teal-main);"></i>
+                    <span id="t-inst-table-title">Participating AICTE Approved Institutions</span>
+                </div>
+                <p class="card-subtitle" id="t-inst-table-sub">National register showing operational years, sanctioned intake, and active departments.</p>
+                <div class="table-responsive">
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Permanent ID</th>
+                                <th>Institution Name</th>
+                                <th>Type</th>
+                                <th>City / State</th>
+                                <th>Established</th>
+                                <th>Operational Years</th>
+                                <th>Sanctioned Intake</th>
+                                <th>Enrolled</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="institutionsTableBody">
+                            <tr><td colspan="9" style="text-align:center;">Loading institutions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- TAB 2: ADD NEW APPROVED INSTITUTION (ADMIN ONLY) -->
+        <section id="tab-add-institution" class="tab-pane">
+            <div class="card" style="max-width: 820px; margin: 0 auto;">
+                <div class="card-title">
+                    <i class="fa-solid fa-building-circle-plus" style="color:var(--teal-main);"></i>
+                    <span>Register New AICTE Approved Institution</span>
+                </div>
+                <p class="card-subtitle">Authorize a new technical college, university, or PGDM institute into the national APAAR student registry.</p>
+
+                <form id="addInstitutionForm">
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label class="form-label">AICTE Permanent ID *</label>
+                            <input type="text" id="addInstId" placeholder="e.g. AICTE-TN-0912" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Institution Type *</label>
+                            <select id="addInstType" class="form-select">
+                                <option value="Autonomous College">Autonomous College</option>
+                                <option value="University">University</option>
+                                <option value="Affiliated College">Affiliated College</option>
+                                <option value="PGDM Institute">PGDM Institute</option>
+                                <option value="Deemed University">Deemed University</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Established Year *</label>
+                            <input type="number" id="addInstYear" min="1800" max="2026" value="2024" required class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Full Institution Name *</label>
+                        <input type="text" id="addInstName" placeholder="e.g. PSG Institute of Advanced Technology" required class="form-input">
+                    </div>
+
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label class="form-label">State *</label>
+                            <input type="text" id="addInstState" placeholder="e.g. Tamil Nadu" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">City *</label>
+                            <input type="text" id="addInstCity" placeholder="e.g. Coimbatore" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Registrar / Official Email *</label>
+                            <input type="email" id="addInstEmail" placeholder="registrar@college.edu" required class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Initial Department / Program *</label>
+                            <input type="text" id="addInstProgram" value="B.Tech Computer Science & Engineering" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Approved Sanctioned Intake *</label>
+                            <input type="number" id="addInstIntake" value="60" min="10" max="300" required class="form-input">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 14px; display:flex; gap:10px;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-plus"></i> Register Institution & Seed Department
+                        </button>
+                        <button type="reset" class="btn btn-secondary">Clear</button>
+                    </div>
+                </form>
+
+                <div id="addInstitutionResult" style="margin-top: 15px; display:none;"></div>
+            </div>
+        </section>
+
+
+        <!-- TAB 3: INSTITUTION STUDENT UPLOAD (WITH DEPARTMENT CHANGE SUPPORT) -->
+        <section id="tab-upload" class="tab-pane">
+            <div class="card">
+                <div class="card-title">
+                    <i class="fa-solid fa-cloud-arrow-up" style="color:var(--teal-main);"></i>
+                    <span id="t-upload-title">Student Admission Submission</span>
+                </div>
+                <p class="card-subtitle" id="t-upload-sub">Submit student admissions. Phone numbers are limited to 10 digits; calendars have efficient presets.</p>
+
+                <div style="display:flex; gap:10px; margin-bottom: 20px;">
+                    <button class="btn btn-secondary btn-sm active" id="btnUploadModeSingle" onclick="switchUploadMode('single')">
+                        <i class="fa-solid fa-user-plus"></i> <span id="t-mode-single">Single Student Admission</span>
+                    </button>
+                    <button class="btn btn-secondary btn-sm" id="btnUploadModeBulk" onclick="switchUploadMode('bulk')">
+                        <i class="fa-solid fa-file-csv"></i> <span id="t-mode-bulk">Bulk CSV Ingestion</span>
+                    </button>
+                </div>
+
+                <!-- Single Student Admission Form -->
+                <div id="uploadSingleContainer">
+                    <form id="studentUploadForm">
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label class="form-label" id="t-form-inst">Institution *</label>
+                                <select id="formInstitutionSelect" required class="form-select" onchange="onInstitutionChange()"></select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" id="t-form-prog">Academic Department *</label>
+                                <select id="formProgramSelect" required class="form-select"></select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" id="t-form-year">Academic Year</label>
+                                <input type="text" id="formAcademicYear" value="2026-2027" readonly class="form-input">
+                            </div>
+                        </div>
+
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label class="form-label" id="t-form-apaar">12-Digit APAAR ID *</label>
+                                <input type="text" id="formApaarId" placeholder="e.g. 904128475102" maxlength="12" required class="form-input" oninput="this.value = this.value.replace(/\D/g, '')">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" id="t-form-roll">Institution Roll / Student ID *</label>
+                                <input type="text" id="formRollNo" placeholder="e.g. 2026-COEP-CS-12" required class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" id="t-form-quota">Quota / Seat Category *</label>
+                                <select id="formQuota" required class="form-select">
+                                    <option value="Regular">Regular (Sanctioned Intake)</option>
+                                    <option value="Supernumerary-TFW">Supernumerary - Tuition Fee Waiver (TFW)</option>
+                                    <option value="Supernumerary-EWS">Supernumerary - Economically Weaker Section (EWS)</option>
+                                    <option value="Supernumerary-PMSSS">Supernumerary - PMSSS / J&K Quota</option>
+                                    <option value="NRI">NRI Quota</option>
+                                    <option value="OCI">OCI Category</option>
+                                    <option value="Foreign National">Foreign National (FN) Category</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-grid-4">
+                            <div class="form-group">
+                                <label class="form-label">First Name *</label>
+                                <input type="text" id="formFirstName" placeholder="Candidate First Name" required class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Last Name *</label>
+                                <input type="text" id="formLastName" placeholder="Candidate Last Name" required class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Gender *</label>
+                                <select id="formGender" required class="form-select">
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Date of Birth (1995-2010) *</label>
+                                <input type="date" id="formDob" min="1995-01-01" max="2010-12-31" value="2005-05-15" required class="form-input">
+                            </div>
+                        </div>
+
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label class="form-label">Email Address *</label>
+                                <input type="email" id="formEmail" placeholder="student@college.ac.in" required class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Mobile Phone (Strictly 10 Digits) *</label>
+                                <input type="tel" id="formPhone" placeholder="10-digit Mobile No" maxlength="10" pattern="[0-9]{10}" required class="form-input" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Admission Date *</label>
+                                <input type="date" id="formAdmissionDate" min="2024-01-01" max="2027-12-31" required class="form-input">
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 16px; display:flex; gap:12px;">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa-solid fa-check"></i> <span id="t-btn-submit-student">Validate APAAR & Register Record</span>
+                            </button>
+                            <button type="reset" class="btn btn-secondary">Clear</button>
+                        </div>
+                    </form>
+
+                    <!-- Validation Result & Dynamic Department Change Option -->
+                    <div id="singleUploadResult" style="margin-top: 16px; display:none;"></div>
+                </div>
+
+                <!-- Bulk CSV Upload -->
+                <div id="uploadBulkContainer" style="display: none;">
+                    <div style="background:#FAF7F2; border:1.5px dashed var(--border-warm); border-radius:var(--radius-lg); text-align:center; padding: 30px;">
+                        <i class="fa-solid fa-file-csv" style="font-size: 2.5rem; color:var(--teal-main); margin-bottom: 10px;"></i>
+                        <h4 id="t-csv-drag-title">Batch Student Upload</h4>
+                        <p style="font-size: 0.82rem; color:var(--text-muted);">CSV Columns: apaar_id, roll_number, first_name, last_name, gender, dob, email, phone (10 digits), quota_category</p>
+                        <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="handleCsvFileSelected(this)">
+                        
+                        <div style="margin-top: 14px; display:flex; justify-content:center; gap:10px;">
+                            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('csvFileInput').click()">
+                                <i class="fa-solid fa-folder-open"></i> Browse CSV File
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="loadSampleCsvData()">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Load Pre-Built SIH Test CSV (With Anomalies)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="csvPreviewContainer" style="margin-top: 16px; display:none;">
+                        <div class="flex-between" style="margin-bottom: 10px;">
+                            <h4 style="font-size: 0.95rem;">Records Ready (<span id="csvRecordCount">0</span> rows)</h4>
+                            <button class="btn btn-accent btn-sm" onclick="submitBulkData()">
+                                <i class="fa-solid fa-play"></i> Run Validation & Ingest
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="styled-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>APAAR ID</th>
+                                        <th>Roll No</th>
+                                        <th>Name</th>
+                                        <th>Phone</th>
+                                        <th>Category</th>
+                                        <th>Email</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="csvPreviewTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="bulkUploadReport" style="margin-top: 16px; display:none;"></div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- TAB 4: MY STUDENTS (INSTITUTION ROLE - WITH VERIFY BUTTON) -->
+        <section id="tab-institution-students" class="tab-pane">
+            <div class="card">
+                <div class="flex-between">
+                    <div>
+                        <h2 class="card-title">
+                            <i class="fa-solid fa-users" style="color:var(--teal-main);"></i>
+                            <span id="t-my-students-title">My Admitted Students Registry</span>
+                        </h2>
+                        <p class="card-subtitle" id="t-my-students-sub">Confidential register. Click "Verify Student" on any student to authenticate credentials in real time.</p>
+                    </div>
+                    <div>
+                        <input type="text" id="txtSearchMyStudents" class="form-input" placeholder="Search by APAAR or Name..." style="width: 240px; padding: 6px 12px; font-size: 0.82rem;" oninput="filterInstitutionStudents(this.value)">
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="margin-top: 10px;">
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>APAAR ID (Masked)</th>
+                                <th>Roll Number</th>
+                                <th>Student Name</th>
+                                <th>Department</th>
+                                <th>Duration</th>
+                                <th>Quota</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="institutionStudentsTableBody">
+                            <tr><td colspan="8" style="text-align:center;">Loading student records...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- TAB 5: MY COLLEGE ANOMALY DESK (INSTITUTION ROLE) -->
+        <section id="tab-inst-anomalies" class="tab-pane">
+            <div class="card">
+                <div class="flex-between">
+                    <div>
+                        <h2 class="card-title">
+                            <i class="fa-solid fa-triangle-exclamation" style="color:var(--color-amber);"></i>
+                            <span>My College Anomaly Desk</span>
+                        </h2>
+                        <p class="card-subtitle">Confidential view of student admission anomalies flagged for your institution. View the exact plain-English reason and resolve them.</p>
+                    </div>
+                    <span class="badge badge-warning" id="instAnomPill">0 College Incidents</span>
+                </div>
+
+                <div class="table-responsive" style="margin-top: 15px;">
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Incident ID</th>
+                                <th>Severity</th>
+                                <th>Violation Reason</th>
+                                <th>Candidate</th>
+                                <th>APAAR ID</th>
+                                <th>Exact Cause / Finding</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="instAnomaliesTableBody">
+                            <tr><td colspan="8" style="text-align:center;">Loading college anomalies...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- TAB 6: AICTE NATIONAL ANOMALY CENTER (ADMIN ROLE) -->
+        <section id="tab-anomalies" class="tab-pane">
+            <div class="card">
+                <div class="flex-between">
+                    <div>
+                        <h2 class="card-title">
+                            <i class="fa-solid fa-triangle-exclamation" style="color:var(--color-red);"></i>
+                            <span id="t-anom-center-title">AICTE Anomaly & Compliance Center</span>
+                        </h2>
+                        <p class="card-subtitle" id="t-anom-center-sub">Cross-institutional duplicate detection, capacity breaches, and format validation flags across all approved colleges.</p>
+                    </div>
+                    <span class="badge badge-danger" id="anomaliesCountPill">0 Active Incidents</span>
+                </div>
+
+                <div class="table-responsive" style="margin-top: 15px;">
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>Incident ID</th>
+                                <th>Severity</th>
+                                <th>Violation Type</th>
+                                <th>APAAR ID</th>
+                                <th>Student Name</th>
+                                <th>Institution</th>
+                                <th>Exact Regulatory Finding</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="anomaliesTableBody">
+                            <tr><td colspan="9" style="text-align:center;">Loading anomalies...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- TAB 7: INSTANT STUDENT VERIFICATION (WITH CLEARED SEARCH BOX ON REFRESH) -->
+        <section id="tab-verify" class="tab-pane">
+            <div class="card" style="max-width: 800px; margin: 0 auto 20px;">
+                <h2 class="card-title" style="justify-content:center; margin-bottom: 6px;">
+                    <i class="fa-solid fa-id-card-clip" style="color:var(--teal-main);"></i>
+                    <span id="t-verify-title">Authorized Student Verification</span>
+                </h2>
+                <p class="card-subtitle" style="text-align:center;" id="t-verify-sub">Query student academic credentials. Search field is always cleared on reload for security.</p>
+
+                <div style="display:flex; gap:10px; margin-top: 14px;">
+                    <input type="text" id="verifyApaarInput" class="form-input" placeholder="Enter 12-Digit Student APAAR ID" maxlength="12" style="font-family:var(--font-mono); font-size:1.05rem;" value="">
+                    <button class="btn btn-primary" onclick="verifyStudentByInput()">
+                        <i class="fa-solid fa-magnifying-glass"></i> <span id="t-btn-verify">Verify</span>
+                    </button>
+                </div>
+
+                <div style="margin-top: 12px; font-size: 0.78rem; color:var(--text-muted); display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
+                    <span>Quick Test:</span>
+                    <button class="btn btn-secondary btn-sm" onclick="quickFillVerify('904128475102')">COEP Student (904128475102)</button>
+                    <button class="btn btn-secondary btn-sm" onclick="quickFillVerify('781923450912')">DTU Student (781923450912)</button>
+                    <button class="btn btn-secondary btn-sm" onclick="quickFillVerify('882190341255')">Flagged Duplicate (882190341255)</button>
+                </div>
+
+                <div id="verifyResultContainer" style="margin-top: 20px; display:none;"></div>
+            </div>
+        </section>
+
+
+        <!-- TAB 8: ACADEMIC ID CARD & PRINTABLE CERTIFICATE -->
+        <section id="tab-idcard" class="tab-pane">
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="flex-between">
+                    <div>
+                        <h2 class="card-title">
+                            <i class="fa-solid fa-certificate" style="color:var(--teal-main);"></i>
+                            <span id="t-cert-title">Verifiable Academic Identity & Degree Credential</span>
+                        </h2>
+                        <p class="card-subtitle" id="t-cert-sub">Official credential with masked APAAR ID, salted SHA-256 hash, and scannable QR verification seal.</p>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i> Print Credential
+                    </button>
+                </div>
+
+                <div class="form-group" style="max-width: 480px; margin-top: 10px;">
+                    <label class="form-label">Select Student to Preview & Issue:</label>
+                    <select id="idCardStudentSelect" class="form-select" onchange="renderStudentIdCard()"></select>
+                </div>
+            </div>
+
+            <div class="two-col-grid">
+                <!-- Digital Student ID Card -->
+                <div class="card" style="background:#FFFFFF; border:1px solid var(--border-card);">
+                    <div style="background:var(--teal-main); color:#FFFFFF; padding:12px; border-radius:var(--radius-md) var(--radius-md) 0 0; text-align:center;">
+                        <div style="font-size:0.75rem; font-weight:700;">ALL INDIA COUNCIL FOR TECHNICAL EDUCATION</div>
+                        <div style="font-size:0.92rem; font-weight:800; margin-top:2px;">NATIONAL STUDENT ACADEMIC IDENTITY</div>
+                    </div>
+                    <div style="padding: 16px; display:flex; flex-direction:column; gap:10px;">
+                        <div style="text-align:center;">
+                            <i class="fa-solid fa-user-graduate" style="font-size: 2.5rem; color:var(--teal-main); background:var(--teal-subtle); padding:12px; border-radius:50%;"></i>
+                            <h3 id="cardStudentName" style="margin-top: 6px; font-size:1.05rem;">STUDENT NAME</h3>
+                            <div style="font-family:var(--font-mono); font-size:0.85rem; color:var(--teal-main); font-weight:700;" id="cardApaarTag">APAAR: •••• •••• 0000</div>
+                            <div style="font-family:var(--font-mono); font-size:0.68rem; color:var(--text-muted); margin-top:2px;" id="cardApaarHash">Hash: SHA256_...</div>
+                        </div>
+
+                        <div style="font-size:0.82rem; display:flex; flex-direction:column; gap:6px; border-top:1px solid var(--border-warm); padding-top:10px;">
+                            <div class="flex-between"><span>Roll Number:</span> <strong id="cardRollNo">---</strong></div>
+                            <div class="flex-between"><span>Department:</span> <strong id="cardProgram">---</strong></div>
+                            <div class="flex-between"><span>Institution:</span> <strong id="cardInstitution">---</strong></div>
+                            <div class="flex-between"><span>Quota Category:</span> <strong id="cardCategory">---</strong></div>
+                            <div class="flex-between"><span>Status:</span> <span class="badge badge-success" id="cardStatusTag">VERIFIED</span></div>
+                        </div>
+
+                        <div style="display:flex; flex-direction:column; align-items:center; margin-top:8px;">
+                            <div id="qrcodeCard"></div>
+                            <small style="color:var(--text-muted); font-size:0.7rem; margin-top:4px;">Scan to Verify on AICTE Repository</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Degree Certificate Sheet -->
+                <div class="card" style="background:#FFFEFA; border:2px double var(--border-warm);">
+                    <div style="text-align:center; border-bottom:1.5px solid var(--border-warm); padding-bottom:10px; margin-bottom:12px;">
+                        <h3 id="certInstitutionName" style="color:var(--teal-main); font-size:1.15rem; font-weight:800;">COEP TECHNOLOGICAL UNIVERSITY</h3>
+                        <p style="font-size:0.74rem; color:var(--text-muted);">Approved by AICTE | Accredited Institution of National Importance</p>
+                        <h4 style="font-size:0.9rem; font-weight:800; color:var(--color-amber); margin-top:4px;">PROVISIONAL DEGREE CREDENTIAL</h4>
+                    </div>
+
+                    <div style="text-align:center; line-height:1.8; font-size:0.88rem;">
+                        <p>
+                            This is to certify that candidate <strong id="certStudentName">Aarav Sharma</strong> bearing 
+                            National Academic Identity <strong>APAAR ID: <span id="certApaarId" style="background:var(--teal-subtle); padding:2px 6px; border-radius:3px;">•••• •••• 5102</span></strong> 
+                            and Roll Number <strong id="certRollNo">2026-COEP-CS-01</strong> is authentically enrolled in 
+                            <strong id="certProgramName">B.Tech Computer Science & Engineering</strong>.
+                        </p>
+                        <p style="font-size:0.74rem; color:var(--text-muted); margin-top:10px;">
+                            This academic record is cryptographically registered in the AICTE Central Repository under NEP 2020.
+                        </p>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:20px; padding-top:12px; border-top:1px solid var(--border-warm);">
+                        <div style="text-align:center;">
+                            <div id="qrcodeCert"></div>
+                            <small style="font-size:0.65rem; color:var(--text-muted);">Tamper-Proof QR</small>
+                        </div>
+                        <div style="text-align:center; font-size:0.74rem;">
+                            <div style="width:130px; border-bottom:1px solid #1C242B; margin-bottom:4px;"></div>
+                            <span>Registrar / Controller</span>
+                            <small id="certDigitalHash" style="display:block; font-size:0.62rem; color:var(--text-muted); max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Hash: SHA256_...</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+
+    <!-- ================= 5. REAL INVESTIGATION & RESOLUTION MODAL (FIXED SCROLL) ================= -->
+    <div id="resolutionModalOverlay" class="modal-overlay">
+        <div class="resolution-modal">
+            <!-- Dedicated Previous/Back button inside modal -->
+            <button class="btn-subview-back" onclick="closeResolutionModal()">
+                <i class="fa-solid fa-arrow-left"></i> Previous / Back
+            </button>
+
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fa-solid fa-gavel" style="color:var(--teal-main);"></i>
+                    <span>Investigate & Resolve Anomaly</span>
+                </h3>
+                <button class="modal-close-btn" onclick="closeResolutionModal()">&times;</button>
+            </div>
+
+            <!-- Plain-English Reason Summary -->
+            <div id="modalAnomalySummary" style="background:#FAF7F2; border:1px solid var(--border-warm); border-radius:var(--radius-md); padding:12px; font-size:0.85rem;">
+                <!-- Populated dynamically -->
+            </div>
+
+            <div style="margin-top: 14px;">
+                <label class="form-label" style="font-weight:700;">Select Resolution Action (Actually Updates Database):</label>
+                <div class="resolution-options">
+                    <label class="resolution-choice-label">
+                        <input type="radio" name="resAction" value="APPROVE_AS_SUPERNUMERARY" checked onchange="toggleResolutionFields()">
+                        <div>
+                            <strong>1. Convert to Supernumerary Seat (TFW / EWS)</strong>
+                            <p style="font-size:0.75rem; color:var(--text-muted);">Updates student quota in database, clears intake breach, and marks record as VERIFIED.</p>
+                        </div>
+                    </label>
+
+                    <label class="resolution-choice-label">
+                        <input type="radio" name="resAction" value="APPROVE_INTAKE_EXCEPTION" onchange="toggleResolutionFields()">
+                        <div>
+                            <strong>2. Grant AICTE Regulatory Dispensation / Intake Exception</strong>
+                            <p style="font-size:0.75rem; color:var(--text-muted);">Approves excess admission under regulatory exemption; student verification status updated to VERIFIED.</p>
+                        </div>
+                    </label>
+
+                    <label class="resolution-choice-label">
+                        <input type="radio" name="resAction" value="REJECT_DUPLICATE" onchange="toggleResolutionFields()">
+                        <div>
+                            <strong>3. Reject Duplicate Admission & Cancel Enrolment</strong>
+                            <p style="font-size:0.75rem; color:var(--text-muted);">Cancels admission in this institution; student record marked as REJECTED_DUPLICATE.</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Optional Supernumerary Quota Picker -->
+            <div id="resolutionQuotaField" class="form-group" style="margin-top: 10px;">
+                <label class="form-label">Assign Supernumerary Category:</label>
+                <select id="modalNewQuota" class="form-select">
+                    <option value="Supernumerary-TFW">Supernumerary - Tuition Fee Waiver (TFW)</option>
+                    <option value="Supernumerary-EWS">Supernumerary - Economically Weaker Section (EWS)</option>
+                    <option value="Supernumerary-PMSSS">Supernumerary - PMSSS / J&K Quota</option>
+                    <option value="NRI">NRI Quota</option>
+                    <option value="OCI">OCI Category</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-top: 10px;">
+                <label class="form-label">Official Investigation Notes:</label>
+                <input type="text" id="modalAdminNotes" class="form-input" placeholder="e.g. Verified valid TFW income certificate issued by competent authority">
+            </div>
+
+            <div style="margin-top: 18px; display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn btn-secondary" onclick="closeResolutionModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitAnomalyResolution()">
+                    <i class="fa-solid fa-floppy-disk"></i> Apply Resolution & Update Record
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= 6. FOOTER ================= -->
+    <footer class="main-footer">
+        <div class="container flex-between">
+            <div>
+                <strong>AICTE APAAR National Student Data Management Platform</strong> | Ministry of Education, Government of India
+            </div>
+            <div>
+                <span>Academic Year: <span class="active-year-label">2026-2027</span></span>
+                <span style="margin: 0 8px;">|</span>
+                <span>Active Role: <strong id="footerRoleLabel">AICTE Admin</strong></span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts: Chart.js & QRCode.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
